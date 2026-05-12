@@ -691,7 +691,7 @@ def build_portfolio_text(portfolio: dict) -> str:
             merged[tk]["qty"]+=info["qty"]; merged[tk]["total_cost"]+=info["avg_price"]*info["qty"]
             if acc_label not in merged[tk]["accounts"]: merged[tk]["accounts"].append(acc_label)
     if not merged: return "보유 종목 없음"
-    header=f"[보유 종목 목록]\n{', '.join(f'{m[\"name\"]}({tk})' for tk,m in merged.items())}\n총 {len(merged)}개\n{'='*60}\n"
+    header = f"[보유 종목 목록]\n" + ", ".join([f"{m['name']}({tk})" for tk, m in merged.items()]) + f"\n총 {len(merged)}개\n" + "="*60 + "\n"
     lines=[]
     for tk,m in merged.items():
         qty=m["qty"]; avg_p=m["total_cost"]//qty if qty else 0
