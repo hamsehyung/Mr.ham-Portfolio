@@ -1,7 +1,7 @@
 streamlit>=1.32.0
 supabase>=2.3.0
 google-generativeai>=0.5.0
-FinanceDataReader>=0.9.50
+finance-datareader>=0.9.50
 feedparser>=6.0.10
 yfinance>=0.2.36
 requests>=2.31.0
