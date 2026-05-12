@@ -966,12 +966,18 @@ def call_gemini_two_stage(api_key, model_name, market_ctx, portfolio_text, today
 # ═══════════════════════════════════════════════════════════
 #  ★ 앱 시작점 ★
 # ═══════════════════════════════════════════════════════════
-st.set_page_config(
-    page_title="Mr.Ham AI 포트폴리오",
-    page_icon="📈",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+hide_top_bar_style = """
+    <style>
+    /* 우측 상단 깃허브 마크 및 기본 헤더 숨기기 */
+    header {visibility: hidden;}
+    /* 기본 햄버거 메뉴 숨기기 */
+    #MainMenu {visibility: hidden;}
+    /* 하단 Streamlit 워터마크 숨기기 (선택) */
+    footer {visibility: hidden;}
+    </style>
+"""
+st.markdown(hide_top_bar_style, unsafe_allow_html=True)
+
 
 # 세션 초기화
 for k,v in {
