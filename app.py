@@ -141,13 +141,27 @@ def save_portfolio(data: dict) -> None:
     if not sb or not st.session_state.get("user"):
         return
     try:
-        sb.table("portfolios").upsert({
-            "user_id":    st.session_state.user.id,
-            "data":       data,
-            "updated_at": datetime.datetime.now().isoformat(),
-        }).execute()
+        user_id = st.session_state.user.id
+        
+        # 1. 기존 데이터가 있는지 확인
+        existing = sb.table("portfolios").select("id").eq("user_id", user_id).execute()
+        
+        if existing.data:
+            # 2. 이미 있으면 업데이트 (Update)
+            sb.table("portfolios").update({
+                "data":       data,
+                "updated_at": datetime.datetime.now().isoformat(),
+            }).eq("user_id", user_id).execute()
+        else:
+            # 3. 없으면 새로 만들기 (Insert)
+            sb.table("portfolios").insert({
+                "user_id":    user_id,
+                "data":       data,
+                "updated_at": datetime.datetime.now().isoformat(),
+            }).execute()
+            
     except Exception as e:
-        st.error(f"저장 오류: {e}")
+        st.error(f"❌ 저장 오류: {e}")
 
 
 # ═══════════════════════════════════════════════════════════
