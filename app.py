@@ -1395,7 +1395,7 @@ st.markdown("""
             font-size:13px;display:flex;align-items:center;gap:10px'>
     <span style='font-size:20px'>☰</span>
     <span>
-        <b>메뉴 열기</b>: 화면 왼쪽 끝 주황 버튼을 누르면 사이드바가 열립니다.<br>
+        <b>메뉴 열기</b>: 화면 왼쪽 상단 주황 버튼을 누르면 사이드바가 열립니다.<br>
         <span style='opacity:0.85;font-size:12px'>AI 모델 선택은 사이드바에서, 종목 관리는 아래 ⚙️ 탭에서</span>
     </span>
 </div>
