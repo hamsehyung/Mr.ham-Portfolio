@@ -1110,7 +1110,7 @@ with st.sidebar:
         if st.button("🚪로그아웃", use_container_width=True):
             _do_logout()
     with col_rk:
-        if st.button("🔑키 재입력", use_container_width=True):
+        if st.button("🔑키,재입력", use_container_width=True):
             st.session_state.api_key          = ""
             st.session_state.api_key_verified  = False
             st.session_state.available_models  = []
