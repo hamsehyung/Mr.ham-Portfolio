@@ -1010,7 +1010,7 @@ def call_gemini_two_stage(api_key, model_name, market_ctx, portfolio_text, today
     if alloc:
         alloc_str=f"총 평가금액: {alloc['total_val']:,}원\n국내ETF:{alloc['domestic_etf_pct']}% | 해외ETF:{alloc['foreign_etf_pct']}% | 개별주:{alloc['stock_pct']}%"
 
-stage2=f"""
+    stage2=f"""
 너는 탑티어 퀀트 펀드매니저다. 오늘은 {today}이다.
 [Stage1 매크로 요약]\n{s1[:500]}
 [보유 포트폴리오]\n{portfolio_text}
@@ -1055,7 +1055,6 @@ stage2=f"""
     if progress_bar: progress_bar.progress(100, text="✅ 분석 완료!")
     status.empty()
     return f"{s1}\n\n---\n\n{s2}"
-
 
 # ═══════════════════════════════════════════════════════════
 #  ★ 앱 시작점 ★  (set_page_config 반드시 첫 번째 st 호출)
