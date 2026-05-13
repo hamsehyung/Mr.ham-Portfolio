@@ -976,7 +976,7 @@ st.set_page_config(
 # PC/모바일 반응형 CSS
 st.markdown("""
 <style>
-/* ── 헤더·푸터 숨기기 ── */
+/* ── 헤더·푸터 숨기기 (모바일 햄버거 메뉴 살리기) ── */
 [data-testid="stToolbar"] {visibility: hidden !important;}
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden !important;}
