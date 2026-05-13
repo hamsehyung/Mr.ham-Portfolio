@@ -977,9 +977,9 @@ st.set_page_config(
 st.markdown("""
 <style>
 /* ── 헤더·푸터 숨기기 ── */
-header {visibility: hidden;}
+[data-testid="stToolbar"] {visibility: hidden !important;}
 #MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
+footer {visibility: hidden !important;}
 
 /* ── PC 기본: 사이드바 있을 때 여백 최소화 ── */
 .block-container {
@@ -1148,58 +1148,73 @@ with st.sidebar:
 
     st.divider()
 
-    # ── 종목 추가 ─────────────────────────────────────────
-    st.subheader("➕ 종목 추가")
-    add_acc=st.radio("계좌",ACC_KEYS,key="add_radio")
-    new_tk=st.text_input("종목코드",placeholder="예: 360750")
-    new_nm=st.text_input("종목명",placeholder="예: TIGER미국S&P500")
-    new_qty=st.number_input("수량(주)",min_value=1,step=1,value=1)
-    new_avg=st.number_input("평단가(원)",min_value=0,step=100,value=0)
-    if st.button("➕ 추가",use_container_width=True):
-        if new_tk and new_nm and new_avg>0:
-            iid=str(uuid.uuid4())
-            st.session_state.portfolio[ACC_MAP[add_acc]][iid]={"ticker":new_tk.strip(),"name":new_nm.strip(),"qty":new_qty,"avg_price":new_avg}
-            save_portfolio(st.session_state.portfolio)
-            st.success(f"✅ {new_nm} 추가!"); st.rerun()
-        else: st.warning("모든 항목을 입력해주세요.")
+st.caption("주가 캐시: 5분 | 뉴스: 10분 | 펀더멘털: 1시간")
 
-    st.divider()
 
-    # ── 종목 삭제 ─────────────────────────────────────────
-    st.subheader("➖ 종목 삭제")
-    del_acc=st.radio("계좌",ACC_KEYS,key="del_radio")
-    del_items=st.session_state.portfolio[ACC_MAP[del_acc]]
-    if del_items:
-        def _fmt(iid): it=del_items[iid]; return f"{it['name']} ({it['ticker']}) — {it['qty']}주"
-        del_id=st.selectbox("삭제",list(del_items.keys()),format_func=_fmt)
-        if st.button("🗑️ 삭제",use_container_width=True):
-            del st.session_state.portfolio[ACC_MAP[del_acc]][del_id]
-            save_portfolio(st.session_state.portfolio); st.warning("삭제 완료!"); st.rerun()
-    else: st.info("삭제할 종목이 없습니다.")
+# ═══════════════════════════════════════════════════════════
+#  포트폴리오 관리 (모바일 최적화 탭 구조)
+# ═══════════════════════════════════════════════════════════
+st.markdown("### ⚙️ 포트폴리오 관리")
+tab_add, tab_edit, tab_del = st.tabs(["➕ 종목 추가", "✏️ 종목 수정", "➖ 종목 삭제"])
 
-    st.divider()
+with tab_add:
+    c1, c2 = st.columns([1, 2])
+    with c1: add_acc = st.radio("계좌 선택", ACC_KEYS, key="add_radio")
+    with c2:
+        new_tk = st.text_input("종목코드", placeholder="예: 360750")
+        new_nm = st.text_input("종목명", placeholder="예: TIGER미국S&P500")
+        c2_1, c2_2 = st.columns(2)
+        with c2_1: new_qty = st.number_input("수량(주)", min_value=1, step=1, value=1)
+        with c2_2: new_avg = st.number_input("평단가(원)", min_value=0, step=100, value=0)
+        if st.button("➕ 추가", use_container_width=True, type="primary"):
+            if new_tk and new_nm and new_avg > 0:
+                iid = str(uuid.uuid4())
+                st.session_state.portfolio[ACC_MAP[add_acc]][iid] = {"ticker":new_tk.strip(),"name":new_nm.strip(),"qty":new_qty,"avg_price":new_avg}
+                save_portfolio(st.session_state.portfolio)
+                st.success(f"✅ {new_nm} 추가 완료!")
+                st.rerun()
+            else: 
+                st.warning("모든 항목을 입력해주세요.")
 
-    # ── 종목 수정 ─────────────────────────────────────────
-    st.subheader("✏️ 종목 수정")
-    edit_acc=st.radio("계좌",ACC_KEYS,key="edit_radio")
-    edit_items=st.session_state.portfolio[ACC_MAP[edit_acc]]
-    if edit_items:
-        def _fmt_e(iid): it=edit_items[iid]; return f"{it['name']} ({it['ticker']}) — {it['qty']}주"
-        edit_id=st.selectbox("수정",list(edit_items.keys()),format_func=_fmt_e,key="edit_sel")
-        if edit_id and edit_id in edit_items:
-            cur=edit_items[edit_id]
-            e_nm=st.text_input("종목명",value=cur["name"],key=f"en_{edit_id}")
-            e_qty=st.number_input("수량",min_value=1,step=1,value=int(cur["qty"]),key=f"eq_{edit_id}")
-            e_avg=st.number_input("평단가(원)",min_value=0,step=100,value=int(cur["avg_price"]),key=f"ea_{edit_id}")
-            changed=e_nm.strip()!=cur["name"] or int(e_qty)!=cur["qty"] or int(e_avg)!=cur["avg_price"]
-            if changed: st.info(f"✏️ {e_nm} | {int(e_qty):,}주 | {int(e_avg):,}원")
-            if st.button("✅ 저장",use_container_width=True,type="primary",disabled=not changed):
-                st.session_state.portfolio[ACC_MAP[edit_acc]][edit_id].update({"name":e_nm.strip() or cur["name"],"qty":int(e_qty),"avg_price":int(e_avg)})
-                save_portfolio(st.session_state.portfolio); st.success("✅ 수정 완료!"); st.rerun()
-    else: st.info("수정할 종목이 없습니다.")
+with tab_edit:
+    c1, c2 = st.columns([1, 2])
+    with c1: edit_acc = st.radio("계좌 선택", ACC_KEYS, key="edit_radio")
+    with c2:
+        edit_items = st.session_state.portfolio[ACC_MAP[edit_acc]]
+        if edit_items:
+            def _fmt_e(iid): return f"{edit_items[iid]['name']} ({edit_items[iid]['ticker']}) — {edit_items[iid]['qty']}주"
+            edit_id = st.selectbox("수정할 종목 선택", list(edit_items.keys()), format_func=_fmt_e, key="edit_sel")
+            if edit_id and edit_id in edit_items:
+                cur = edit_items[edit_id]
+                e_nm = st.text_input("종목명 수정", value=cur["name"], key=f"en_{edit_id}")
+                e_qty = st.number_input("수량 수정", min_value=1, step=1, value=int(cur["qty"]), key=f"eq_{edit_id}")
+                e_avg = st.number_input("평단가 수정", min_value=0, step=100, value=int(cur["avg_price"]), key=f"ea_{edit_id}")
+                changed = e_nm.strip() != cur["name"] or int(e_qty) != cur["qty"] or int(e_avg) != cur["avg_price"]
+                if st.button("✅ 저장", use_container_width=True, type="primary", disabled=not changed):
+                    st.session_state.portfolio[ACC_MAP[edit_acc]][edit_id].update({"name":e_nm.strip() or cur["name"], "qty":int(e_qty), "avg_price":int(e_avg)})
+                    save_portfolio(st.session_state.portfolio)
+                    st.success("✅ 수정 완료!")
+                    st.rerun()
+        else: 
+            st.info("수정할 종목이 없습니다.")
 
-    st.divider()
-    st.caption("주가 캐시: 5분 | 뉴스: 10분 | 펀더멘털: 1시간")
+with tab_del:
+    c1, c2 = st.columns([1, 2])
+    with c1: del_acc = st.radio("계좌 선택", ACC_KEYS, key="del_radio")
+    with c2:
+        del_items = st.session_state.portfolio[ACC_MAP[del_acc]]
+        if del_items:
+            def _fmt(iid): return f"{del_items[iid]['name']} ({del_items[iid]['ticker']}) — {del_items[iid]['qty']}주"
+            del_id = st.selectbox("삭제할 종목 선택", list(del_items.keys()), format_func=_fmt)
+            if st.button("🗑️ 삭제", use_container_width=True):
+                del st.session_state.portfolio[ACC_MAP[del_acc]][del_id]
+                save_portfolio(st.session_state.portfolio)
+                st.warning("삭제 완료!")
+                st.rerun()
+        else: 
+            st.info("삭제할 종목이 없습니다.")
+
+st.divider()
 
 
 # ═══════════════════════════════════════════════════════════
