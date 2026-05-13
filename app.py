@@ -1031,7 +1031,7 @@ def call_gemini_two_stage(api_key, model_name, market_ctx, portfolio_text, today
 ### 📌 [종목명] ([코드]) — [ETF/개별주] | [계좌] | 총 OO주
 - **투자의견**: 강력매수/추가매수/보유/비중축소/매도
 - **목표가**: OOO원 (근거 명시)
-- **밸류에이션**: PER OO배 | PBR OO배 | ROE OO%
+- **핵심 지표**: [개별주] PEG, FCF, 매출성장 등 / [ETF] 베타, 분배율, 총보수 등 전달된 데이터 적극 반영
 - **이동평균**: MA60 대비 ±OO%
 - **수급**: 외국인▲/▼ | 기관▲/▼
 - **핵심 근거**: 2줄
