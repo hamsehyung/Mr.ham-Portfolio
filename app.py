@@ -1147,7 +1147,7 @@ components.html("""
 
         btn.style.cssText = [
             'position:fixed',
-            'right:12px',
+            'left:12px',
             'top:12px',
             'transform:none',,
             'z-index:2147483647',             /* 최대 z-index */
