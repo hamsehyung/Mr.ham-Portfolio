@@ -1390,12 +1390,12 @@ with st.sidebar:
 
 # 모바일 전용 안내 배너 (사이드바 열기 버튼 안내)
 st.markdown("""
-<div style='background:linear-gradient(90deg,#1c83e1,#0d5fad);
+<div style='background:linear-gradient(90deg,#ff6b2b,#e85a1e);
             color:white;border-radius:10px;padding:10px 16px;margin-bottom:12px;
             font-size:13px;display:flex;align-items:center;gap:10px'>
     <span style='font-size:20px'>☰</span>
     <span>
-        <b>메뉴 열기</b>: 화면 왼쪽 끝 파란 버튼을 누르면 사이드바가 열립니다.<br>
+        <b>메뉴 열기</b>: 화면 왼쪽 끝 주황 버튼을 누르면 사이드바가 열립니다.<br>
         <span style='opacity:0.85;font-size:12px'>AI 모델 선택은 사이드바에서, 종목 관리는 아래 ⚙️ 탭에서</span>
     </span>
 </div>
