@@ -1105,7 +1105,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-if st.button("🚪 로그아웃", use_container_width=True):
+    if st.button("🚪 로그아웃", use_container_width=True):
         _do_logout()
         
     if st.button("🔑 키 재입력", use_container_width=True):
