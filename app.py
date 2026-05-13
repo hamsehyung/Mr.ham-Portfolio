@@ -1147,17 +1147,17 @@ components.html("""
 
         btn.style.cssText = [
             'position:fixed',
-            'left:0',
-            'top:50%',
-            'transform:translateY(-50%)',
+            'right:12px',
+            'top:12px',
+            'transform:none',,
             'z-index:2147483647',             /* 최대 z-index */
             'background:linear-gradient(160deg,#ff6b2b 0%,#ff8c42 100%)',
             'color:#ffffff',
             'border:2.5px solid rgba(255,255,255,0.65)',
-            'border-left:none',
-            'border-radius:0 18px 18px 0',
-            'width:46px',
-            'height:74px',
+            'border-left:2.5px solid rgba(255,255,255,0.65)',
+            'border-radius:12px',
+            'width:42px',
+            'height:42px',
             'cursor:pointer',
             'display:none',
             'flex-direction:column',
@@ -1173,11 +1173,11 @@ components.html("""
 
         /* hover 효과 */
         btn.addEventListener('mouseenter', function(){
-            this.style.width = '54px';
+            this.style.opacity = '0.85';
             this.style.background = 'linear-gradient(160deg,#e85a1e 0%,#ff7a30 100%)';
         });
         btn.addEventListener('mouseleave', function(){
-            this.style.width = '46px';
+            this.style.opacity = '1';
             this.style.background = 'linear-gradient(160deg,#ff6b2b 0%,#ff8c42 100%)';
         });
 
