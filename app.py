@@ -701,9 +701,10 @@ def _naver_price(ticker):
                 sp = d.get("stockPrice") or d.get("stockSummary") or d
                 curr = ti(sp.get("closePrice")) or ti(sp.get("currentPrice"))
                 if curr>0:
-                    high = ti(sp.get("highPrice52Week") or sp.get("high52Week")) or curr
-                    low  = ti(sp.get("lowPrice52Week")  or sp.get("low52Week"))  or curr
-                    return curr,max(high,curr),(low if low>0 else curr)
+                    # [수정] 52주 데이터를 못 찾으면 현재가로 덮어씌우지 않고 0을 반환합니다.
+                    high = ti(sp.get("highPrice52Week") or sp.get("high52Week"))
+                    low  = ti(sp.get("lowPrice52Week")  or sp.get("low52Week"))
+                    return curr, high, low
         except: pass
     return 0,0,0
 
@@ -716,13 +717,19 @@ def get_stock_data(ticker: str) -> tuple:
     """
     if not ticker: return 0,0,0
     is_domestic = bool(re.match(r"^\d{6}$", ticker))
+    
+    curr = high = low = 0
 
-    # ── 1순위: 네이버 API (국내 전용, 가장 빠름·안정적) ──
+    # ── 1순위: 네이버 API (국내 전용) ──
     if is_domestic:
         r = _naver_price(ticker)
-        if r[0] > 0: return r
+        if r[0] > 0:
+            curr, high, low = r
+            # 네이버에서 52주 고/저점을 모두 찾았다면 바로 리턴!
+            if high > 0 and low > 0 and high > low:
+                return curr, high, low
 
-    # ── 2순위: yfinance 통합 허브 (이미 캐시된 데이터 재활용) ──
+    # ── 2순위: yfinance 통합 허브 (네이버에서 못 찾은 52주 고/저점 보완) ──
     if HAS_YFINANCE:
         suffixes = [".KS", ".KQ"] if is_domestic else [""]
         for sfx in suffixes:
@@ -732,23 +739,37 @@ def get_stock_data(ticker: str) -> tuple:
                 if hist is not None and not hist.empty and "Close" in hist.columns:
                     c = hist["Close"].dropna()
                     if len(c) > 0 and int(c.iloc[-1]) > 0:
-                        curr = int(c.iloc[-1])
+                        # 현재가를 앞서 네이버에서 못 구했으면 YF로 채움
+                        if curr == 0: curr = int(c.iloc[-1])
+                        
                         info = yf_data["info"]
-                        high = int(info.get("fiftyTwoWeekHigh", curr)) if info.get("fiftyTwoWeekHigh") else curr
-                        low  = int(info.get("fiftyTwoWeekLow",  curr)) if info.get("fiftyTwoWeekLow")  else curr
+                        yf_high = int(info.get("fiftyTwoWeekHigh", 0))
+                        yf_low  = int(info.get("fiftyTwoWeekLow",  0))
+                        
+                        # YF info에 값이 없으면, 이미 캐시된 200일 역사적 차트에서 최고/최저점 추출
+                        if yf_high == 0 or yf_low == 0:
+                            yf_high = int(c.max())
+                            yf_low  = int(c.min())
+                        
+                        high = max(high, yf_high, curr)
+                        low  = yf_low if yf_low > 0 else (low if low > 0 else curr)
                         return curr, max(high, curr), (low if low > 0 else curr)
             except: continue
 
-    # ── 3순위: FDR (최후의 보루 — 느리고 IP 차단 위험) ──
+    # ── 3순위: FDR (최후의 보루) ──
     if HAS_FDR and fdr:
         try:
             df = fdr.DataReader(ticker, start=today_kst() - datetime.timedelta(days=365))
             if df is not None and not df.empty and "Close" in df.columns:
                 c = df["Close"].dropna()
-                if len(c) > 0: return int(c.iloc[-1]), int(c.max()), int(c.min())
+                if len(c) > 0:
+                    if curr == 0: curr = int(c.iloc[-1])
+                    high = max(high, int(c.max()))
+                    low  = int(c.min()) if low == 0 else min(low, int(c.min()))
+                    return curr, max(high, curr), (low if low > 0 else curr)
         except: pass
 
-    return 0, 0, 0
+    return curr, max(high, curr), (low if low > 0 else curr)
 
 
 @st.cache_data(ttl=3600)
