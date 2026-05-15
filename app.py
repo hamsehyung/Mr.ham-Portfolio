@@ -61,11 +61,17 @@ ACC_MAP = {
 ACC_KEYS = list(ACC_MAP.keys())
 
 NEWS_FEEDS = {
-    "한국경제":     "https://www.hankyung.com/feed/all-news",
-    "매일경제":     "https://www.mk.co.kr/rss/30100041/",
-    "연합뉴스경제": "https://www.yna.co.kr/RSS/economy.xml",
-    "머니투데이":   "https://rss.mt.co.kr/mt_top_news_rss.xml",
-    "Reuters":      "https://feeds.reuters.com/reuters/businessNews",
+    # ── 1. 핵심 경제/비즈니스 (중복 제거) ──
+    "한국경제":     "https://www.hankyung.com/feed/all-news", # 매경, 머투 등은 한경과 겹치므로 생략 추천
+    "Reuters":      "https://feeds.reuters.com/reuters/businessNews", # 글로벌 경제 필수
+    
+    # ── 2. 기술/미래 트렌드 ──
+    "전자신문(IT)": "https://rss.etnews.com/Section901.xml",
+    "ZDNet(기술)":  "https://feeds.feedburner.com/zdnet/korea",
+    
+    # ── 3. 글로벌 정세 및 정치/사회 ──
+    "SBS(국제)":    "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=08&plink=RSSREADER",
+    "한경(정치)":   "https://www.hankyung.com/feed/politics",
 }
 
 MARKET_TICKERS = {
@@ -599,7 +605,9 @@ def fetch_etf_naver_data(ticker: str) -> dict:
         d = re.sub(r"[^\d]","",str(raw))
         if d:
             v = int(d)
-            result["aum_억"] = v//100_000_000 if v>1_000_000_000_000 else v
+            # 한국 최대 ETF도 10만(10조) 수준이므로, 
+            # 기준을 100만(1,000,000)으로 잡으면 소형 ETF의 원화 단위까지 완벽하게 분리합니다.
+            result["aum_억"] = v // 100_000_000 if v > 1_000_000 else v
 
     # ── [추가] yfinance로 ETF 성과 지표 보완 ─────────────────────────
     # 네이버 ETF API에 없는 베타·분배율·보수율을 yfinance로 수집
@@ -921,6 +929,7 @@ def build_portfolio_text(portfolio: dict) -> str:
                 f"ROE:{fund['roe']:.1f}%" if fund.get("roe") is not None else "",
                 f"EPS:{int(fund['eps']):,}원" if fund.get("eps") is not None else "",
                 f"시총:{fund['market_cap_억']:,}억" if fund.get("market_cap_억") is not None else "",
+                f"배당률:{fund['div_yield']:.2f}%" if fund.get("div_yield") is not None else "",
                 # ── [추가] 미래 가치·성장성 지표 ─────────────────────
                 # ForwardPER: 예상이익 기준, Trailing PER보다 미래 지향
                 f"ForwardPER:{fund['forward_per']:.1f}배" if fund.get("forward_per") is not None else "",
