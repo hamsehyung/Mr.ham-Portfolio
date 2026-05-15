@@ -362,6 +362,24 @@ def fetch_market_indices() -> dict:
         except: continue
     return result
 
+# ═══════════════════════════════════════════════════════════
+#  ★ [신규] yfinance 데이터 통합 캐싱 허브 (병목 해결용)
+# ═══════════════════════════════════════════════════════════
+@st.cache_data(ttl=600)
+def get_yf_cached_data(ticker: str) -> dict:
+    """한 종목당 yfinance 서버를 딱 1번만 찌르도록 데이터를 일괄 수집하여 메모리에 보관합니다."""
+    result = {"info": {}, "history": None}
+    if not HAS_YFINANCE: return result
+    try:
+        tk = yf.Ticker(ticker)
+        result["info"] = tk.info or {}
+        # 200일치 데이터를 한 번에 가져와서 차트/이평선/현재가 분석에 공용으로 씁니다.
+        hist = tk.history(period="200d")
+        if not hist.empty:
+            result["history"] = hist
+    except:
+        pass
+    return result
 
 # ═══════════════════════════════════════════════════════════
 #  기업 펀더멘털 — Naver Finance
@@ -373,7 +391,7 @@ def fetch_naver_fundamentals(ticker: str) -> dict:
     if not re.match(r"^\d{6}$", ticker):
         if HAS_YFINANCE:
             try:
-                info = yf.Ticker(ticker).info
+                info = get_yf_cached_data(ticker)["info"]
                 result["per"]           = info.get("trailingPE") or info.get("forwardPE")
                 result["pbr"]           = info.get("priceToBook")
                 roe_raw                 = info.get("returnOnEquity")
@@ -429,7 +447,7 @@ def fetch_naver_fundamentals(ticker: str) -> dict:
     if HAS_YFINANCE:
         for sfx in (".KS", ".KQ"):
             try:
-                info = yf.Ticker(ticker + sfx).info
+                info = get_yf_cached_data(ticker + sfx)["info"]
                 # 유효한 종목인지 확인 (빈 응답 방어)
                 if not (info.get("regularMarketPrice") or info.get("currentPrice")):
                     continue
@@ -576,7 +594,7 @@ def fetch_etf_naver_data(ticker: str) -> dict:
     if HAS_YFINANCE:
         for sfx in (".KS", ".KQ"):
             try:
-                info = yf.Ticker(ticker + sfx).info
+                info = get_yf_cached_data(ticker + sfx)["info"]
                 if not (info.get("regularMarketPrice") or info.get("currentPrice")):
                     continue
                 # 베타: 시장 대비 민감도 (1 초과=시장보다 변동성 큼)
@@ -661,14 +679,15 @@ def get_stock_data(ticker: str) -> tuple:
     if HAS_YFINANCE:
         for sfx in ([".KS",".KQ"] if is_domestic else [""]):
             try:
-                tk   = yf.Ticker(ticker+sfx)
-                hist = tk.history(period="5d")
-                if not hist.empty and "Close" in hist.columns:
+                yf_data = get_yf_cached_data(ticker+sfx)
+                hist = yf_data["history"]
+                if hist is not None and not hist.empty and "Close" in hist.columns:
                     c = hist["Close"].dropna()
                     if len(c)>0 and int(c.iloc[-1])>0:
                         curr=int(c.iloc[-1])
-                        try: info=tk.info; high=int(info.get("fiftyTwoWeekHigh",curr)); low=int(info.get("fiftyTwoWeekLow",curr))
-                        except: high=low=curr
+                        info = yf_data["info"]
+                        high=int(info.get("fiftyTwoWeekHigh",curr)) if info.get("fiftyTwoWeekHigh") else curr
+                        low=int(info.get("fiftyTwoWeekLow",curr))  if info.get("fiftyTwoWeekLow")  else curr
                         return curr,max(high,curr),(low if low>0 else curr)
             except: continue
     return 0,0,0
@@ -685,8 +704,8 @@ def get_moving_averages(ticker: str) -> dict:
     if (df is None or df.empty) and HAS_YFINANCE:
         try:
             sfx=".KS" if re.match(r"^\d{6}$",ticker) else ""
-            hist=yf.Ticker(ticker+sfx).history(period="200d")
-            if not hist.empty: df=hist
+            hist = get_yf_cached_data(ticker+sfx)["history"]
+            if hist is not None and not hist.empty: df=hist
         except: pass
     if df is None or df.empty or "Close" not in df.columns: return result
     c = df["Close"].dropna()
