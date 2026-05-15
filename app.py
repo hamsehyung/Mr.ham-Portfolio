@@ -522,11 +522,24 @@ def fetch_investor_trend(ticker: str, days: int = 5) -> dict:
 # ═══════════════════════════════════════════════════════════
 #  ETF
 # ═══════════════════════════════════════════════════════════
-ETF_KEYWORDS = ["KODEX","TIGER","KINDEX","ARIRANG","HANARO","KOSEF","KBSTAR",
-                "SOL","ACE","TIMEFOLIO","FOCUS","WOORI","PLUS","SMART","파워","히어로","마이티","KOACT"]
+ETF_KEYWORDS = [
+    "KODEX", "TIGER", "KBSTAR", "ACE", "SOL",
+    "KINDEX", "ARIRANG", "PLUS",
+    "HANARO", "KOSEF", "TIMEFOLIO", "FOCUS", "WOORI",
+    "SMART", "파워", "히어로", "마이티", "KOACT",
+    "1Q", "TRUSTON", "UNICORN", "VITA", "DAISHIN343", 
+    "마이다스", "에셋플러스", "KCGI", "TREX", "HK", "BNK"
+]
 
 def is_etf(name: str) -> bool:
-    return any(k.upper() in name.upper() for k in ETF_KEYWORDS)
+    name_up = name.upper()
+    # 1. 이름이 ETF 브랜드명으로 "시작(startswith)"하는지 확인 (개별주 이름 오인 방지)
+    if any(name_up.startswith(k) for k in ETF_KEYWORDS):
+        return True
+    # 2. 이름 어딘가에 "ETF"라는 단어가 명시적으로 들어있는지 확인 (최후의 보루)
+    if "ETF" in name_up:
+        return True
+    return False
 
 
 @st.cache_data(ttl=3600)
