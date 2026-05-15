@@ -523,7 +523,7 @@ def fetch_investor_trend(ticker: str, days: int = 5) -> dict:
 #  ETF
 # ═══════════════════════════════════════════════════════════
 ETF_KEYWORDS = ["KODEX","TIGER","KINDEX","ARIRANG","HANARO","KOSEF","KBSTAR",
-                "SOL","ACE","TIMEFOLIO","FOCUS","WOORI","PLUS","SMART","파워","히어로","마이티"]
+                "SOL","ACE","TIMEFOLIO","FOCUS","WOORI","PLUS","SMART","파워","히어로","마이티","KOACT"]
 
 def is_etf(name: str) -> bool:
     return any(k.upper() in name.upper() for k in ETF_KEYWORDS)
