@@ -552,38 +552,32 @@ def fetch_naver_fundamentals(ticker: str) -> dict:
 @st.cache_data(ttl=600)
 def fetch_investor_trend_raw(ticker: str) -> list:
     """
-    네이버 투자자 동향 원시 데이터를 20일치 한 번만 가져옴.
-    네이버 API의 구조 변경(List -> Dict) 및 파라미터 요구에 유연하게 대응합니다.
+    네이버 API 구조(JSON)가 예고 없이 변경되는 것에 완벽히 대응하기 위해,
+    텍스트 전체에서 정규표현식(Regex)을 사용하여 외인/기관 순매수 데이터만 무식하고 확실하게 추출해냅니다.
     """
     if not ticker or not (len(ticker) in (5, 6) and ticker[:4].isdigit()): return []
     
-    # 만약을 대비해 두 가지 엔드포인트와 페이지네이션 파라미터를 모두 시도합니다.
     endpoints = [
         f"https://m.stock.naver.com/api/stock/{ticker}/investor?page=1&pageSize=20",
-        f"https://m.stock.naver.com/api/stock/{ticker}/investors?page=1&pageSize=20"
+        f"https://m.stock.naver.com/api/stock/{ticker}/investors?page=1&pageSize=20",
+        f"https://m.stock.naver.com/front-api/v1/domestic/stock/{ticker}/investor"
     ]
     
     for url in endpoints:
         try:
             r = _http.get(url, headers=NAVER_HEADERS, timeout=8)
             if r.status_code == 200:
-                raw = r.json()
+                text = r.text
+                # JSON 구조가 어떻게 바뀌든, 글자에서 숫자만 뜯어냅니다.
+                f_sales = re.findall(r'"foreignNetSale"\s*:\s*"?(-?[\d,]+)"?', text)
+                o_sales = re.findall(r'"organNetSale"\s*:\s*"?(-?[\d,]+)"?', text)
                 
-                # 1. 예전처럼 리스트로 바로 오는 경우
-                if isinstance(raw, list) and len(raw) > 0:
-                    return raw
-                    
-                # 2. 구조가 변경되어 딕셔너리 안에 래핑되어 오는 경우
-                if isinstance(raw, dict):
-                    target = raw.get("result", raw)
-                    if isinstance(target, list) and len(target) > 0: return target
-                    if isinstance(target, dict):
-                        # 딕셔너리 내부를 순회하며 수급 데이터가 있는 리스트를 발굴
-                        for val in target.values():
-                            if isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
-                                if "foreignNetSale" in val[0] or "foreign_net" in val[0]:
-                                    return val
-        except:
+                # 외인과 기관 데이터가 둘 다 존재하면 조립해서 반환합니다.
+                if f_sales and o_sales:
+                    limit = min(len(f_sales), len(o_sales), 20)
+                    if limit > 0:
+                        return [{"foreignNetSale": f_sales[i], "organNetSale": o_sales[i]} for i in range(limit)]
+        except: 
             continue
             
     return []
@@ -1419,8 +1413,12 @@ def call_gemini_two_stage(api_key, model_name, market_ctx, portfolio_text, today
 ⑤ ⛔ 종목 병합·그룹화 절대 금지 — "기타 ETF", "채권 ETF들" 등 표현으로
    복수 종목을 묶는 행위 엄격히 금지. 각각 별도 ### 헤더로 작성.
 ⑥ 투자의견 변경 시 위 [의견 변경 금지 프로토콜]의 어느 조건 충족했는지 명시.
-   변경 없으면 "전일 대비 변경 없음" 명시.
-⑦ 분석 완료 후 "✅ 분석 완료: OO개 / OO개" 형식으로 자기 검증 필수.
+⑦ 🚨 [치명적 오류 방지: 가격 환각(Hallucination) 절대 금지]
+   AI가 자신의 과거 학습 데이터(몇 년 전 주가)를 꺼내어 목표가와 손절가를 엉터리로 계산하는 것을 엄격히 금지한다.
+   - [보유 종목]: 반드시 제공된 [보유 포트폴리오] 텍스트 내의 '현재: OO원'을 실시간 가격으로 채택할 것.
+   - [신규 추천]: 반드시 제공된 [참고 시세] 목록 안에서만 고르고, 그 시세를 사용할 것.
+   - 목표가와 손절가는 위에서 확보한 '실시간 현재가'를 기준으로만 정확하게 산출할 것.
+⑧ 분석 완료 후 "✅ 분석 완료: OO개 / OO개" 형식으로 자기 검증 필수.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 출력 형식 (마크다운)
@@ -1432,7 +1430,7 @@ def call_gemini_two_stage(api_key, model_name, market_ctx, portfolio_text, today
 ### 📌 [번호]. [종목명] ([코드]) — [ETF/개별주] | [계좌] | 총 OO주
 - **투자의견**: 강력매수 / 추가매수 / 보유 / 비중축소 / 매도
   → *변경 없음 OR "변경 사유: OOO 조건 충족" 중 하나 반드시 명시*
-- **장기 목표가**: OOO원 (3년 기준, 근거 명시)
+- **실시간 현재가 / 장기 목표가**: [포트폴리오에 명시된 현재가]원 / OOO원 (3년 기준, 근거 명시)
 - **미래 가치 분석**:
   - [개별주] ForwardPER | PEG | 매출성장 | FCF | 부채비율
   - [ETF] 베타 | 분배율 | 총보수 | 기초지수 방향성
@@ -1440,7 +1438,7 @@ def call_gemini_two_stage(api_key, model_name, market_ctx, portfolio_text, today
 - **수급 흐름**: 외국인 5일/20일 | 기관 5일/20일 (방향성 해석 포함)
 - **메가트렌드 정렬**: 해당 종목이 수혜를 받는 장기 트렌드
 - **핵심 투자 근거**: 비즈니스 모델과 장기 성장 스토리 중심 2줄
-- **손절 기준**: OOO원 *(펀더멘털 훼손 시점 기준, 단순 주가 기준 아님)*
+- **손절 기준**: OOO원 *(반드시 명시된 현재가 기준으로 산출할 것)*
 - **계좌 절세 포인트**: 1줄
 
 ---
