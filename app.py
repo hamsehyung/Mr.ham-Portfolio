@@ -76,9 +76,10 @@ NEWS_FEEDS = {
     "전자신문(IT)": "https://rss.etnews.com/Section901.xml",
     "ZDNet(기술)":  "https://feeds.feedburner.com/zdnet/korea",
     
-    # ── 3. 글로벌 정세 및 정치/사회 ──
-    "SBS(국제)":    "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=08&plink=RSSREADER",
-    "한경(정치)":   "https://www.hankyung.com/feed/politics",
+    # ── 3. 글로벌 마켓 및 정책 (주식/ETF 투자 특화) ──
+    "매경(글로벌)": "https://www.mk.co.kr/rss/50300009/", # 해외 증시, 매크로 지표 중심
+    "WSJ(마켓)":    "https://feeds.a.dj.com/rss/RSSMarketsMain.xml", # 월가 시황 1차 데이터 (AI가 자동 한글 해석)
+    "한경(정치)":   "https://www.hankyung.com/feed/politics", # 국내 밸류업, 금투세 등 금융 정책 파악용
 }
 
 MARKET_TICKERS = {
