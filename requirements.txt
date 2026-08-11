@@ -1,0 +1,24 @@
+# ═══════════════════════════════════════════════════════════
+#  Mr.Ham v11 — Streamlit Cloud 배포용
+#  ※ 깨끗한 가상환경에서 설치·부팅 검증 완료
+# ═══════════════════════════════════════════════════════════
+
+streamlit>=1.40
+google-genai>=1.0
+supabase>=2.0
+
+# PyPI 정식 배포명은 finance-datareader (하이픈)
+# 코드에서는 import FinanceDataReader 로 그대로 사용
+finance-datareader>=0.9.90
+
+yfinance>=0.2.40
+requests>=2.31
+feedparser>=6.0
+pandas>=2.0
+numpy>=1.24
+Pillow>=10.0
+
+# ── pykrx 는 의도적으로 제외 ──────────────────────────────
+# 이유 1. matplotlib>=3.8 · numpy>=2.0 을 강제로 끌어와 설치 실패·타임아웃 유발
+# 이유 2. pykrx 1.2.8+ 는 KRX_ID/KRX_PW 로그인이 필요해 Streamlit Cloud 에서 어차피 미동작
+# 앱은 FinanceDataReader 폴백으로 정상 작동하며, 수급 팩터만 중립(50점) 처리됩니다.
