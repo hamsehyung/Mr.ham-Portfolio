@@ -1,0 +1,14 @@
+# ── Mr.Ham v11 필수 ──
+streamlit>=1.40
+google-genai>=1.0
+supabase>=2.0
+FinanceDataReader>=0.9.50
+pandas>=2.0
+numpy>=1.24
+requests>=2.31
+feedparser>=6.0
+yfinance>=0.2.40
+
+# ── 선택 (없어도 동작, 있으면 데이터 품질 향상) ──
+# pykrx: 전종목 수급 데이터. KRX_ID/KRX_PW 환경변수 설정 시에만 안정 동작
+pykrx>=1.0.45
